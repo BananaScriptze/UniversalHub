@@ -1,345 +1,131 @@
---// ================= SERVICES ================= //
-
-local Players = game:GetService("Players")
-local RunService = game:GetService("RunService")
-local UIS = game:GetService("UserInputService")
-local TeleportService = game:GetService("TeleportService")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-local Lighting = game:GetService("Lighting")
-
-local LocalPlayer = Players.LocalPlayer
-local Mouse = LocalPlayer:GetMouse()
-local Camera = workspace.CurrentCamera
-
---// ================= RAYFIELD ================= //
-
 local Rayfield = loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
 
+local Players = game:GetService("Players")
+local UIS = game:GetService("UserInputService")
+local RunService = game:GetService("RunService")
+local TeleportService = game:GetService("TeleportService")
+local ReplicatedStorage = game:GetService("ReplicatedStorage")
+
+local LocalPlayer = Players.LocalPlayer
+local Camera = workspace.CurrentCamera
+
+getgenv().InfiniteJump = false
+getgenv().Fly = false
+getgenv().KillAura = false
+
 local Window = Rayfield:CreateWindow({
-    Name = "Universal Hub | Reworked",
+    Name = "Universal Hub",
     LoadingTitle = "Universal Hub",
-    LoadingSubtitle = "MM2 Edition",
+    LoadingSubtitle = "",
     ConfigurationSaving = {
         Enabled = true,
         FolderName = "UniversalHub",
-        FileName = "UniversalHubConfig"
-    },
-    Discord = {
-        Enabled = false
-    },
-    KeySystem = false
+        FileName = "UniversalConfig"
+    }
 })
 
---// ================= VARIABLES ================= //
+-- ==================== FUNCTIONS ====================
 
-getgenv().UH = {
-    Fly = false,
-    Noclip = false,
-    InfiniteJump = false,
-    Spinbot = false,
-    KillAura = false,
-    ESP = false,
-    FullBright = false,
-    Speed = 16,
-    Jump = 50,
-    FlySpeed = 70,
-    Hitbox = 5
-}
-
---// ================= FUNCTIONS ================= //
-
-local function Character()
+local function GetCharacter()
     return LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
 end
 
-local function Humanoid()
-    return Character():FindFirstChildWhichIsA("Humanoid")
+local function GetHumanoid()
+    local char = GetCharacter()
+    return char and char:FindFirstChildWhichIsA("Humanoid")
 end
 
-local function Root()
-    return Character():FindFirstChild("HumanoidRootPart")
+local function GetRoot()
+    local char = GetCharacter()
+    return char and char:FindFirstChild("HumanoidRootPart")
 end
 
-local function Notify(title, text)
-    Rayfield:Notify({
-        Title = title,
-        Content = text,
-        Duration = 4,
-        Image = 4483362458
-    })
-end
+-- ==================== UNIVERSAL TAB ====================
 
-local function GetRole(plr)
-    local char = plr.Character
-    local backpack = plr:FindFirstChild("Backpack")
+local UniversalTab = Window:CreateTab("Universal", 4483362458)
 
-    if not char then
-        return "INNOCENT"
-    end
-
-    local hasKnife =
-        char:FindFirstChild("Knife") or
-        (backpack and backpack:FindFirstChild("Knife"))
-
-    local hasGun =
-        char:FindFirstChild("Gun") or
-        (backpack and backpack:FindFirstChild("Gun"))
-
-    if hasKnife then
-        return "MURDERER"
-    elseif hasGun then
-        return "SHERIFF"
-    end
-
-    return "INNOCENT"
-end
-
---// ================= FLING ================= //
-
-local function Fling(target)
-    if not target then
-        return
-    end
-
-    if not target.Character then
-        return
-    end
-
-    local targetRoot = target.Character:FindFirstChild("HumanoidRootPart")
-    local myRoot = Root()
-
-    if not targetRoot or not myRoot then
-        return
-    end
-
-    local old = myRoot.CFrame
-
-    local BV = Instance.new("BodyVelocity")
-    BV.MaxForce = Vector3.new(math.huge, math.huge, math.huge)
-    BV.Velocity = Vector3.new(0, 0, 0)
-    BV.Parent = myRoot
-
-    local BG = Instance.new("BodyAngularVelocity")
-    BG.MaxTorque = Vector3.new(math.huge, math.huge, math.huge)
-    BG.AngularVelocity = Vector3.new(99999, 99999, 99999)
-    BG.Parent = myRoot
-
-    for _ = 1, 60 do
-        myRoot.CFrame = targetRoot.CFrame * CFrame.new(0, 0, 1)
-        myRoot.AssemblyLinearVelocity = targetRoot.CFrame.LookVector * 10000
-        RunService.Heartbeat:Wait()
-    end
-
-    BV:Destroy()
-    BG:Destroy()
-
-    myRoot.CFrame = old
-end
-
---// ================= UNIVERSAL TAB ================= //
-
-local Universal = Window:CreateTab("Universal", 4483362458)
-
-Universal:CreateSlider({
+UniversalTab:CreateSlider({
     Name = "WalkSpeed",
-    Range = {16, 300},
+    Range = {16, 200},
     Increment = 1,
     CurrentValue = 16,
-    Callback = function(v)
-        UH.Speed = v
-
-        local hum = Humanoid()
+    Callback = function(Value)
+        local hum = GetHumanoid()
 
         if hum then
-            hum.WalkSpeed = v
+            hum.WalkSpeed = Value
         end
     end,
 })
 
-Universal:CreateSlider({
+UniversalTab:CreateInput({
+    Name = "Enter WalkSpeed",
+    PlaceholderText = "Type number...",
+    RemoveTextAfterFocusLost = false,
+    Callback = function(Text)
+        local num = tonumber(Text)
+        local hum = GetHumanoid()
+
+        if num and hum then
+            hum.WalkSpeed = num
+        end
+    end,
+})
+
+UniversalTab:CreateSlider({
     Name = "JumpPower",
     Range = {50, 300},
     Increment = 1,
     CurrentValue = 50,
-    Callback = function(v)
-        UH.Jump = v
-
-        local hum = Humanoid()
+    Callback = function(Value)
+        local hum = GetHumanoid()
 
         if hum then
-            hum.JumpPower = v
+            hum.JumpPower = Value
         end
     end,
 })
 
-Universal:CreateSlider({
-    Name = "Fly Speed",
-    Range = {20, 300},
-    Increment = 1,
-    CurrentValue = 70,
-    Callback = function(v)
-        UH.FlySpeed = v
-    end,
-})
-
-Universal:CreateSlider({
-    Name = "FOV",
-    Range = {70, 120},
-    Increment = 1,
-    CurrentValue = 70,
-    Callback = function(v)
-        Camera.FieldOfView = v
-    end,
-})
-
-Universal:CreateSlider({
-    Name = "Gravity",
-    Range = {0, 196},
-    Increment = 1,
-    CurrentValue = workspace.Gravity,
-    Callback = function(v)
-        workspace.Gravity = v
-    end,
-})
-
-Universal:CreateToggle({
-    Name = "Fly",
-    CurrentValue = false,
-    Callback = function(v)
-        UH.Fly = v
-    end,
-})
-
-Universal:CreateToggle({
-    Name = "Noclip",
-    CurrentValue = false,
-    Callback = function(v)
-        UH.Noclip = v
-    end,
-})
-
-Universal:CreateToggle({
+UniversalTab:CreateToggle({
     Name = "Infinite Jump",
     CurrentValue = false,
-    Callback = function(v)
-        UH.InfiniteJump = v
+    Callback = function(Value)
+        getgenv().InfiniteJump = Value
     end,
 })
 
-Universal:CreateToggle({
-    Name = "Spinbot",
+UniversalTab:CreateToggle({
+    Name = "Fly",
     CurrentValue = false,
-    Callback = function(v)
-        UH.Spinbot = v
+    Callback = function(Value)
+        getgenv().Fly = Value
     end,
 })
 
-Universal:CreateToggle({
-    Name = "FullBright",
-    CurrentValue = false,
-    Callback = function(v)
-        UH.FullBright = v
-    end,
-})
-
-Universal:CreateButton({
-    Name = "FPS Boost",
+UniversalTab:CreateButton({
+    Name = "God Mode",
     Callback = function()
-        for _, v in pairs(game:GetDescendants()) do
-            if v:IsA("BasePart") then
-                v.Material = Enum.Material.Plastic
-                v.Reflectance = 0
-            elseif v:IsA("Decal") then
-                v.Transparency = 1
-            elseif v:IsA("ParticleEmitter") or v:IsA("Trail") then
-                v.Enabled = false
-            end
-        end
+        local hum = GetHumanoid()
 
-        Notify("FPS", "FPS Boost Enabled")
+        if hum then
+            hum.MaxHealth = math.huge
+            hum.Health = math.huge
+        end
     end,
 })
 
-Universal:CreateButton({
-    Name = "Rejoin",
+UniversalTab:CreateButton({
+    Name = "Rejoin Server",
     Callback = function()
         TeleportService:Teleport(game.PlaceId, LocalPlayer)
     end,
 })
 
-Universal:CreateButton({
-    Name = "Server Hop",
-    Callback = function()
-        TeleportService:Teleport(game.PlaceId)
-    end,
-})
-
-Universal:CreateButton({
-    Name = "Reset Character",
-    Callback = function()
-        local hum = Humanoid()
-
-        if hum then
-            hum.Health = 0
-        end
-    end,
-})
-
-Universal:CreateButton({
-    Name = "Infinite Yield",
-    Callback = function()
-        loadstring(game:HttpGet("https://raw.githubusercontent.com/EdgeIY/infiniteyield/master/source"))()
-    end,
-})
-
---// ================= PLAYER TAB ================= //
-
-local PlayerTab = Window:CreateTab("Players", 4483362458)
-
-local SelectedPlayer = nil
-
-PlayerTab:CreateInput({
-    Name = "Player Username",
-    PlaceholderText = "Enter Username",
-    RemoveTextAfterFocusLost = false,
-    Callback = function(txt)
-        for _, plr in pairs(Players:GetPlayers()) do
-            if string.find(string.lower(plr.Name), string.lower(txt)) then
-                SelectedPlayer = plr
-                Notify("Player", "Selected: " .. plr.Name)
-                break
-            end
-        end
-    end,
-})
-
-PlayerTab:CreateButton({
-    Name = "Teleport To Player",
-    Callback = function()
-        if SelectedPlayer and SelectedPlayer.Character then
-            local targetRoot = SelectedPlayer.Character:FindFirstChild("HumanoidRootPart")
-
-            if targetRoot and Root() then
-                Root().CFrame = targetRoot.CFrame + Vector3.new(0, 3, 0)
-            end
-        end
-    end,
-})
-
-PlayerTab:CreateButton({
-    Name = "Fling Player",
-    Callback = function()
-        if SelectedPlayer then
-            Fling(SelectedPlayer)
-        end
-    end,
-})
-
---// ================= MM2 TAB ================= //
+-- ==================== MM2 TAB ====================
 
 if game.PlaceId == 142823291 then
 
-    local MM2 = Window:CreateTab("MM2", 4483362458)
+    local MM2Tab = Window:CreateTab("MM2", 4483362458)
 
     local ESPFolder = Instance.new("Folder")
     ESPFolder.Name = "MM2ESP"
@@ -353,40 +139,53 @@ if game.PlaceId == 142823291 then
         local Billboard = Instance.new("BillboardGui")
         Billboard.Name = plr.Name
         Billboard.AlwaysOnTop = true
-        Billboard.Size = UDim2.new(0, 200, 0, 50)
+        Billboard.Size = UDim2.new(0, 250, 0, 60)
         Billboard.Enabled = false
         Billboard.Parent = ESPFolder
 
         local Label = Instance.new("TextLabel")
-        Label.BackgroundTransparency = 1
         Label.Size = UDim2.new(1, 0, 1, 0)
+        Label.BackgroundTransparency = 1
         Label.TextScaled = true
         Label.Font = Enum.Font.GothamBold
         Label.TextStrokeTransparency = 0
         Label.Parent = Billboard
 
         task.spawn(function()
-            while Billboard.Parent do
-                local char = plr.Character
-                local head = char and char:FindFirstChild("Head")
+            while Billboard.Parent and plr.Parent do
+                pcall(function()
 
-                if head then
-                    Billboard.Adornee = head
-                end
+                    local char = plr.Character
 
-                local role = GetRole(plr)
+                    if char and char:FindFirstChild("Head") then
+                        Billboard.Adornee = char.Head
+                    end
 
-                if role == "MURDERER" then
-                    Label.TextColor3 = Color3.fromRGB(255, 0, 0)
-                elseif role == "SHERIFF" then
-                    Label.TextColor3 = Color3.fromRGB(0, 100, 255)
-                else
-                    Label.TextColor3 = Color3.fromRGB(0, 255, 100)
-                end
+                    local backpack = plr:FindFirstChild("Backpack")
 
-                Label.Text = plr.Name .. " [" .. role .. "]"
+                    local hasKnife =
+                        (char and char:FindFirstChild("Knife")) or
+                        (backpack and backpack:FindFirstChild("Knife"))
 
-                task.wait(0.3)
+                    local hasGun =
+                        (char and char:FindFirstChild("Gun")) or
+                        (backpack and backpack:FindFirstChild("Gun"))
+
+                    if hasKnife then
+                        Label.TextColor3 = Color3.fromRGB(255, 0, 0)
+                        Label.Text = plr.Name .. " [MURDERER]"
+
+                    elseif hasGun then
+                        Label.TextColor3 = Color3.fromRGB(0, 100, 255)
+                        Label.Text = plr.Name .. " [SHERIFF]"
+
+                    else
+                        Label.TextColor3 = Color3.fromRGB(0, 255, 100)
+                        Label.Text = plr.Name .. " [INNOCENT]"
+                    end
+                end)
+
+                task.wait(0.4)
             end
         end)
     end
@@ -397,42 +196,23 @@ if game.PlaceId == 142823291 then
 
     Players.PlayerAdded:Connect(CreateESP)
 
-    MM2:CreateToggle({
+    MM2Tab:CreateToggle({
         Name = "Role ESP",
         CurrentValue = false,
-        Callback = function(v)
-            UH.ESP = v
-
+        Callback = function(state)
             for _, gui in pairs(ESPFolder:GetChildren()) do
                 if gui:IsA("BillboardGui") then
-                    gui.Enabled = v
+                    gui.Enabled = state
                 end
             end
         end,
     })
 
-    MM2:CreateToggle({
-        Name = "Kill Aura",
-        CurrentValue = false,
-        Callback = function(v)
-            UH.KillAura = v
-        end,
-    })
-
-    MM2:CreateSlider({
-        Name = "Hitbox Size",
-        Range = {2, 30},
-        Increment = 1,
-        CurrentValue = 5,
-        Callback = function(v)
-            UH.Hitbox = v
-        end,
-    })
-
-    MM2:CreateButton({
+    MM2Tab:CreateButton({
         Name = "Auto Grab Gun",
         Callback = function()
-            local root = Root()
+
+            local root = GetRoot()
 
             if not root then
                 return
@@ -440,6 +220,7 @@ if game.PlaceId == 142823291 then
 
             for _, v in pairs(workspace:GetDescendants()) do
                 if v.Name == "GunDrop" or v.Name == "Gun" then
+
                     pcall(function()
                         firetouchinterest(root, v, 0)
                         firetouchinterest(root, v, 1)
@@ -449,23 +230,118 @@ if game.PlaceId == 142823291 then
         end,
     })
 
-    MM2:CreateButton({
-        Name = "Fling Murderer",
+    MM2Tab:CreateButton({
+        Name = "Chat Expose Roles",
         Callback = function()
+
             for _, plr in pairs(Players:GetPlayers()) do
-                if GetRole(plr) == "MURDERER" then
-                    Fling(plr)
+
+                local bp = plr:FindFirstChild("Backpack")
+
+                if bp then
+
+                    if bp:FindFirstChild("Knife") then
+                        ReplicatedStorage
+                            .DefaultChatSystemChatEvents
+                            .SayMessageRequest
+                            :FireServer(plr.Name .. " HAS THE KNIFE!", "All")
+                    end
+
+                    if bp:FindFirstChild("Gun") then
+                        ReplicatedStorage
+                            .DefaultChatSystemChatEvents
+                            .SayMessageRequest
+                            :FireServer(plr.Name .. " HAS THE GUN!", "All")
+                    end
                 end
             end
         end,
     })
 
-    MM2:CreateButton({
+    MM2Tab:CreateButton({
+        Name = "Fling Murderer",
+        Callback = function()
+
+            for _, plr in pairs(Players:GetPlayers()) do
+
+                if plr ~= LocalPlayer and plr.Character then
+
+                    local backpack = plr:FindFirstChild("Backpack")
+
+                    local hasKnife =
+                        plr.Character:FindFirstChild("Knife") or
+                        (backpack and backpack:FindFirstChild("Knife"))
+
+                    if hasKnife then
+
+                        local root = GetRoot()
+                        local targetRoot = plr.Character:FindFirstChild("HumanoidRootPart")
+
+                        if root and targetRoot then
+                            root.AssemblyLinearVelocity =
+                                (targetRoot.Position - root.Position).Unit * 350
+                        end
+                    end
+                end
+            end
+        end,
+    })
+
+    MM2Tab:CreateButton({
         Name = "Fling Sheriff",
         Callback = function()
+
             for _, plr in pairs(Players:GetPlayers()) do
-                if GetRole(plr) == "SHERIFF" then
-                    Fling(plr)
+
+                if plr ~= LocalPlayer and plr.Character then
+
+                    local backpack = plr:FindFirstChild("Backpack")
+
+                    local hasGun =
+                        plr.Character:FindFirstChild("Gun") or
+                        (backpack and backpack:FindFirstChild("Gun"))
+
+                    if hasGun then
+
+                        local root = GetRoot()
+                        local targetRoot = plr.Character:FindFirstChild("HumanoidRootPart")
+
+                        if root and targetRoot then
+                            root.AssemblyLinearVelocity =
+                                (targetRoot.Position - root.Position).Unit * 350
+                        end
+                    end
+                end
+            end
+        end,
+    })
+
+    MM2Tab:CreateToggle({
+        Name = "Kill Aura",
+        CurrentValue = false,
+        Callback = function(state)
+            getgenv().KillAura = state
+        end,
+    })
+
+    MM2Tab:CreateSlider({
+        Name = "Hitbox Expander",
+        Range = {2, 30},
+        Increment = 1,
+        CurrentValue = 5,
+        Callback = function(Value)
+
+            for _, plr in pairs(Players:GetPlayers()) do
+
+                if plr ~= LocalPlayer and plr.Character then
+
+                    local hrp = plr.Character:FindFirstChild("HumanoidRootPart")
+
+                    if hrp then
+                        hrp.Size = Vector3.new(Value, Value, Value)
+                        hrp.Transparency = 0.5
+                        hrp.CanCollide = false
+                    end
                 end
             end
         end,
@@ -473,21 +349,13 @@ if game.PlaceId == 142823291 then
 
 end
 
---// ================= CTRL CLICK TP ================= //
-
-Mouse.Button1Down:Connect(function()
-    if UIS:IsKeyDown(Enum.KeyCode.LeftControl) then
-        if Root() then
-            Root().CFrame = CFrame.new(Mouse.Hit.Position + Vector3.new(0, 5, 0))
-        end
-    end
-end)
-
---// ================= INFINITE JUMP ================= //
+-- ==================== GLOBAL LOGIC ====================
 
 UIS.JumpRequest:Connect(function()
-    if UH.InfiniteJump then
-        local hum = Humanoid()
+
+    if getgenv().InfiniteJump then
+
+        local hum = GetHumanoid()
 
         if hum then
             hum:ChangeState(Enum.HumanoidStateType.Jumping)
@@ -495,101 +363,81 @@ UIS.JumpRequest:Connect(function()
     end
 end)
 
---// ================= MAIN LOOP ================= //
-
 RunService.RenderStepped:Connect(function()
 
-    local char = Character()
-    local root = Root()
-
     -- Fly
-    if UH.Fly and root then
-        local move = Vector3.zero
+    if getgenv().Fly then
 
-        if UIS:IsKeyDown(Enum.KeyCode.W) then
-            move += Camera.CFrame.LookVector
-        end
+        local root = GetRoot()
 
-        if UIS:IsKeyDown(Enum.KeyCode.S) then
-            move -= Camera.CFrame.LookVector
-        end
+        if root then
 
-        if UIS:IsKeyDown(Enum.KeyCode.A) then
-            move -= Camera.CFrame.RightVector
-        end
+            local move = Vector3.zero
 
-        if UIS:IsKeyDown(Enum.KeyCode.D) then
-            move += Camera.CFrame.RightVector
-        end
+            if UIS:IsKeyDown(Enum.KeyCode.W) then
+                move += Camera.CFrame.LookVector
+            end
 
-        if UIS:IsKeyDown(Enum.KeyCode.Space) then
-            move += Vector3.new(0, 1, 0)
-        end
+            if UIS:IsKeyDown(Enum.KeyCode.S) then
+                move -= Camera.CFrame.LookVector
+            end
 
-        if UIS:IsKeyDown(Enum.KeyCode.LeftShift) then
-            move -= Vector3.new(0, 1, 0)
-        end
+            if UIS:IsKeyDown(Enum.KeyCode.A) then
+                move -= Camera.CFrame.RightVector
+            end
 
-        if move.Magnitude > 0 then
-            root.AssemblyLinearVelocity = move.Unit * UH.FlySpeed
-        else
-            root.AssemblyLinearVelocity = Vector3.zero
-        end
-    end
+            if UIS:IsKeyDown(Enum.KeyCode.D) then
+                move += Camera.CFrame.RightVector
+            end
 
-    -- Noclip
-    if UH.Noclip and char then
-        for _, v in pairs(char:GetDescendants()) do
-            if v:IsA("BasePart") then
-                v.CanCollide = false
+            if UIS:IsKeyDown(Enum.KeyCode.Space) then
+                move += Vector3.new(0, 1, 0)
+            end
+
+            if UIS:IsKeyDown(Enum.KeyCode.LeftShift) then
+                move -= Vector3.new(0, 1, 0)
+            end
+
+            if move.Magnitude > 0 then
+                root.AssemblyLinearVelocity = move.Unit * 60
+            else
+                root.AssemblyLinearVelocity = Vector3.zero
             end
         end
     end
 
-    -- Spinbot
-    if UH.Spinbot and root then
-        root.CFrame *= CFrame.Angles(0, math.rad(25), 0)
-    end
-
-    -- FullBright
-    if UH.FullBright then
-        Lighting.Brightness = 5
-        Lighting.ClockTime = 12
-        Lighting.FogEnd = 100000
-        Lighting.GlobalShadows = false
-    end
-
     -- Kill Aura
-    if UH.KillAura and root then
-        for _, plr in pairs(Players:GetPlayers()) do
-            if plr ~= LocalPlayer and plr.Character then
-                local enemyRoot = plr.Character:FindFirstChild("HumanoidRootPart")
+    if getgenv().KillAura then
 
-                if enemyRoot then
-                    local dist = (enemyRoot.Position - root.Position).Magnitude
+        local root = GetRoot()
 
-                    if dist < 15 then
-                        root.CFrame = enemyRoot.CFrame * CFrame.new(0, 0, 2)
+        if root then
+
+            for _, plr in pairs(Players:GetPlayers()) do
+
+                if plr ~= LocalPlayer and plr.Character then
+
+                    local enemyRoot = plr.Character:FindFirstChild("HumanoidRootPart")
+
+                    if enemyRoot then
+
+                        local dist =
+                            (enemyRoot.Position - root.Position).Magnitude
+
+                        if dist < 15 then
+                            root.CFrame =
+                                enemyRoot.CFrame * CFrame.new(0, 0, 3)
+                        end
                     end
                 end
             end
         end
     end
-
-    -- Hitbox Expander
-    for _, plr in pairs(Players:GetPlayers()) do
-        if plr ~= LocalPlayer and plr.Character then
-            local hrp = plr.Character:FindFirstChild("HumanoidRootPart")
-
-            if hrp then
-                hrp.Size = Vector3.new(UH.Hitbox, UH.Hitbox, UH.Hitbox)
-                hrp.Transparency = 0.7
-                hrp.CanCollide = false
-            end
-        end
-    end
-
 end)
 
-Notify("Universal Hub", "Loaded Successfully")
-
+Rayfield:Notify({
+    Title = "Universal Hub",
+    Content = "Loaded Successfully! MM2 Tab Added",
+    Duration = 6,
+    Image = 4483362458,
+})
