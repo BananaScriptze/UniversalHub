@@ -1,47 +1,17 @@
-local Rayfield = loadstring(game:HttpGet("https://sirius.menu/rayfield"))()
-
-local Players = game:GetService("Players")
-local UIS = game:GetService("UserInputService")
-local RunService = game:GetService("RunService")
-local TeleportService = game:GetService("TeleportService")
-local ReplicatedStorage = game:GetService("ReplicatedStorage")
-
-local LocalPlayer = Players.LocalPlayer
-local Camera = workspace.CurrentCamera
-
-getgenv().InfiniteJump = false
-getgenv().Fly = false
-getgenv().KillAura = false
+local Rayfield = loadstring(game:HttpGet('https://sirius.menu/rayfield'))()
 
 local Window = Rayfield:CreateWindow({
-    Name = "Universal Hub",
-    LoadingTitle = "Universal Hub",
-    LoadingSubtitle = "",
-    ConfigurationSaving = {
-        Enabled = true,
-        FolderName = "UniversalHub",
-        FileName = "UniversalConfig"
-    }
+   Name = "Universal Hub",
+   LoadingTitle = "Universal Hub",
+   LoadingSubtitle = "",
+   ConfigurationSaving = {
+      Enabled = true,
+      FolderName = "UniversalHub",
+      FileName = "UniversalConfig"
+   }
 })
 
--- ==================== FUNCTIONS ====================
-
-local function GetCharacter()
-    return LocalPlayer.Character or LocalPlayer.CharacterAdded:Wait()
-end
-
-local function GetHumanoid()
-    local char = GetCharacter()
-    return char and char:FindFirstChildWhichIsA("Humanoid")
-end
-
-local function GetRoot()
-    local char = GetCharacter()
-    return char and char:FindFirstChild("HumanoidRootPart")
-end
-
 -- ==================== UNIVERSAL TAB ====================
-
 local UniversalTab = Window:CreateTab("Universal", 4483362458)
 
 UniversalTab:CreateSlider({
@@ -50,11 +20,8 @@ UniversalTab:CreateSlider({
     Increment = 1,
     CurrentValue = 16,
     Callback = function(Value)
-        local hum = GetHumanoid()
-
-        if hum then
-            hum.WalkSpeed = Value
-        end
+        local hum = game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("Humanoid")
+        if hum then hum.WalkSpeed = Value end
     end,
 })
 
@@ -64,11 +31,8 @@ UniversalTab:CreateInput({
     RemoveTextAfterFocusLost = false,
     Callback = function(Text)
         local num = tonumber(Text)
-        local hum = GetHumanoid()
-
-        if num and hum then
-            hum.WalkSpeed = num
-        end
+        local hum = game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("Humanoid")
+        if num and hum then hum.WalkSpeed = num end
     end,
 })
 
@@ -78,11 +42,8 @@ UniversalTab:CreateSlider({
     Increment = 1,
     CurrentValue = 50,
     Callback = function(Value)
-        local hum = GetHumanoid()
-
-        if hum then
-            hum.JumpPower = Value
-        end
+        local hum = game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("Humanoid")
+        if hum then hum.JumpPower = Value end
     end,
 })
 
@@ -105,11 +66,10 @@ UniversalTab:CreateToggle({
 UniversalTab:CreateButton({
     Name = "God Mode",
     Callback = function()
-        local hum = GetHumanoid()
-
+        local hum = game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("Humanoid")
         if hum then
-            hum.MaxHealth = math.huge
-            hum.Health = math.huge
+            hum.MaxHealth = 9e9
+            hum.Health = 9e9
         end
     end,
 })
@@ -117,24 +77,22 @@ UniversalTab:CreateButton({
 UniversalTab:CreateButton({
     Name = "Rejoin Server",
     Callback = function()
-        TeleportService:Teleport(game.PlaceId, LocalPlayer)
+        game:GetService("TeleportService"):Teleport(game.PlaceId)
     end,
 })
 
--- ==================== MM2 TAB ====================
-
+-- ==================== MM2 TAB (Only in MM2) ====================
 if game.PlaceId == 142823291 then
 
     local MM2Tab = Window:CreateTab("MM2", 4483362458)
 
+    -- Role ESP System
     local ESPFolder = Instance.new("Folder")
     ESPFolder.Name = "MM2ESP"
     ESPFolder.Parent = game.CoreGui
 
     local function CreateESP(plr)
-        if plr == LocalPlayer then
-            return
-        end
+        if plr == game.Players.LocalPlayer then return end
 
         local Billboard = Instance.new("BillboardGui")
         Billboard.Name = plr.Name
@@ -144,47 +102,36 @@ if game.PlaceId == 142823291 then
         Billboard.Parent = ESPFolder
 
         local Label = Instance.new("TextLabel")
-        Label.Size = UDim2.new(1, 0, 1, 0)
+        Label.Size = UDim2.new(1,0,1,0)
         Label.BackgroundTransparency = 1
         Label.TextScaled = true
         Label.Font = Enum.Font.GothamBold
         Label.TextStrokeTransparency = 0
+        Label.Text = plr.Name
         Label.Parent = Billboard
 
         task.spawn(function()
-            while Billboard.Parent and plr.Parent do
+            while Billboard.Parent do
                 pcall(function()
-
                     local char = plr.Character
-
                     if char and char:FindFirstChild("Head") then
                         Billboard.Adornee = char.Head
                     end
 
-                    local backpack = plr:FindFirstChild("Backpack")
-
-                    local hasKnife =
-                        (char and char:FindFirstChild("Knife")) or
-                        (backpack and backpack:FindFirstChild("Knife"))
-
-                    local hasGun =
-                        (char and char:FindFirstChild("Gun")) or
-                        (backpack and backpack:FindFirstChild("Gun"))
+                    local hasKnife = char and (char:FindFirstChild("Knife") or plr.Backpack:FindFirstChild("Knife"))
+                    local hasGun = char and (char:FindFirstChild("Gun") or plr.Backpack:FindFirstChild("Gun"))
 
                     if hasKnife then
                         Label.TextColor3 = Color3.fromRGB(255, 0, 0)
                         Label.Text = plr.Name .. " [MURDERER]"
-
                     elseif hasGun then
                         Label.TextColor3 = Color3.fromRGB(0, 100, 255)
                         Label.Text = plr.Name .. " [SHERIFF]"
-
                     else
                         Label.TextColor3 = Color3.fromRGB(0, 255, 100)
                         Label.Text = plr.Name .. " [INNOCENT]"
                     end
                 end)
-
                 task.wait(0.4)
             end
         end)
@@ -193,7 +140,6 @@ if game.PlaceId == 142823291 then
     for _, plr in pairs(Players:GetPlayers()) do
         CreateESP(plr)
     end
-
     Players.PlayerAdded:Connect(CreateESP)
 
     MM2Tab:CreateToggle({
@@ -201,30 +147,19 @@ if game.PlaceId == 142823291 then
         CurrentValue = false,
         Callback = function(state)
             for _, gui in pairs(ESPFolder:GetChildren()) do
-                if gui:IsA("BillboardGui") then
-                    gui.Enabled = state
-                end
+                if gui:IsA("BillboardGui") then gui.Enabled = state end
             end
         end,
     })
 
+    -- More MM2 Features
     MM2Tab:CreateButton({
         Name = "Auto Grab Gun",
         Callback = function()
-
-            local root = GetRoot()
-
-            if not root then
-                return
-            end
-
             for _, v in pairs(workspace:GetDescendants()) do
                 if v.Name == "GunDrop" or v.Name == "Gun" then
-
-                    pcall(function()
-                        firetouchinterest(root, v, 0)
-                        firetouchinterest(root, v, 1)
-                    end)
+                    firetouchinterest(game.Players.LocalPlayer.Character.HumanoidRootPart, v, 0)
+                    firetouchinterest(game.Players.LocalPlayer.Character.HumanoidRootPart, v, 1)
                 end
             end
         end,
@@ -233,25 +168,14 @@ if game.PlaceId == 142823291 then
     MM2Tab:CreateButton({
         Name = "Chat Expose Roles",
         Callback = function()
-
-            for _, plr in pairs(Players:GetPlayers()) do
-
+            for _, plr in pairs(game.Players:GetPlayers()) do
                 local bp = plr:FindFirstChild("Backpack")
-
                 if bp then
-
                     if bp:FindFirstChild("Knife") then
-                        ReplicatedStorage
-                            .DefaultChatSystemChatEvents
-                            .SayMessageRequest
-                            :FireServer(plr.Name .. " HAS THE KNIFE!", "All")
+                        game:GetService("ReplicatedStorage").DefaultChatSystemChatEvents.SayMessageRequest:FireServer(plr.Name .. " HAS THE KNIFE!", "normalchat")
                     end
-
                     if bp:FindFirstChild("Gun") then
-                        ReplicatedStorage
-                            .DefaultChatSystemChatEvents
-                            .SayMessageRequest
-                            :FireServer(plr.Name .. " HAS THE GUN!", "All")
+                        game:GetService("ReplicatedStorage").DefaultChatSystemChatEvents.SayMessageRequest:FireServer(plr.Name .. " HAS THE GUN!", "normalchat")
                     end
                 end
             end
@@ -261,26 +185,15 @@ if game.PlaceId == 142823291 then
     MM2Tab:CreateButton({
         Name = "Fling Murderer",
         Callback = function()
-
             for _, plr in pairs(Players:GetPlayers()) do
-
-                if plr ~= LocalPlayer and plr.Character then
-
-                    local backpack = plr:FindFirstChild("Backpack")
-
-                    local hasKnife =
-                        plr.Character:FindFirstChild("Knife") or
-                        (backpack and backpack:FindFirstChild("Knife"))
-
+                if plr ~= game.Players.LocalPlayer and plr.Character then
+                    local hasKnife = false
+                    for _, tool in pairs(plr.Character:GetChildren()) do
+                        if tool:IsA("Tool") and tool.Name:find("Knife") then hasKnife = true end
+                    end
                     if hasKnife then
-
-                        local root = GetRoot()
-                        local targetRoot = plr.Character:FindFirstChild("HumanoidRootPart")
-
-                        if root and targetRoot then
-                            root.AssemblyLinearVelocity =
-                                (targetRoot.Position - root.Position).Unit * 350
-                        end
+                        local root = game.Players.LocalPlayer.Character.HumanoidRootPart
+                        root.Velocity = (plr.Character.HumanoidRootPart.Position - root.Position).Unit * 350
                     end
                 end
             end
@@ -290,26 +203,15 @@ if game.PlaceId == 142823291 then
     MM2Tab:CreateButton({
         Name = "Fling Sheriff",
         Callback = function()
-
             for _, plr in pairs(Players:GetPlayers()) do
-
-                if plr ~= LocalPlayer and plr.Character then
-
-                    local backpack = plr:FindFirstChild("Backpack")
-
-                    local hasGun =
-                        plr.Character:FindFirstChild("Gun") or
-                        (backpack and backpack:FindFirstChild("Gun"))
-
+                if plr ~= game.Players.LocalPlayer and plr.Character then
+                    local hasGun = false
+                    for _, tool in pairs(plr.Character:GetChildren()) do
+                        if tool:IsA("Tool") and (tool.Name:find("Gun") or tool.Name:find("Sheriff")) then hasGun = true end
+                    end
                     if hasGun then
-
-                        local root = GetRoot()
-                        local targetRoot = plr.Character:FindFirstChild("HumanoidRootPart")
-
-                        if root and targetRoot then
-                            root.AssemblyLinearVelocity =
-                                (targetRoot.Position - root.Position).Unit * 350
-                        end
+                        local root = game.Players.LocalPlayer.Character.HumanoidRootPart
+                        root.Velocity = (plr.Character.HumanoidRootPart.Position - root.Position).Unit * 350
                     end
                 end
             end
@@ -330,18 +232,9 @@ if game.PlaceId == 142823291 then
         Increment = 1,
         CurrentValue = 5,
         Callback = function(Value)
-
             for _, plr in pairs(Players:GetPlayers()) do
-
-                if plr ~= LocalPlayer and plr.Character then
-
-                    local hrp = plr.Character:FindFirstChild("HumanoidRootPart")
-
-                    if hrp then
-                        hrp.Size = Vector3.new(Value, Value, Value)
-                        hrp.Transparency = 0.5
-                        hrp.CanCollide = false
-                    end
+                if plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+                    plr.Character.HumanoidRootPart.Size = Vector3.new(Value, Value, Value)
                 end
             end
         end,
@@ -350,84 +243,41 @@ if game.PlaceId == 142823291 then
 end
 
 -- ==================== GLOBAL LOGIC ====================
-
-UIS.JumpRequest:Connect(function()
-
+game:GetService("UserInputService").JumpRequest:Connect(function()
     if getgenv().InfiniteJump then
-
-        local hum = GetHumanoid()
-
-        if hum then
-            hum:ChangeState(Enum.HumanoidStateType.Jumping)
-        end
+        local hum = game.Players.LocalPlayer.Character and game.Players.LocalPlayer.Character:FindFirstChild("Humanoid")
+        if hum then hum:ChangeState(Enum.HumanoidStateType.Jumping) end
     end
 end)
 
-RunService.RenderStepped:Connect(function()
-
-    -- Fly
+game:GetService("RunService").RenderStepped:Connect(function()
     if getgenv().Fly then
-
-        local root = GetRoot()
-
+        local char = game.Players.LocalPlayer.Character
+        local root = char and char:FindFirstChild("HumanoidRootPart")
         if root then
-
             local move = Vector3.zero
-
-            if UIS:IsKeyDown(Enum.KeyCode.W) then
-                move += Camera.CFrame.LookVector
-            end
-
-            if UIS:IsKeyDown(Enum.KeyCode.S) then
-                move -= Camera.CFrame.LookVector
-            end
-
-            if UIS:IsKeyDown(Enum.KeyCode.A) then
-                move -= Camera.CFrame.RightVector
-            end
-
-            if UIS:IsKeyDown(Enum.KeyCode.D) then
-                move += Camera.CFrame.RightVector
-            end
-
-            if UIS:IsKeyDown(Enum.KeyCode.Space) then
-                move += Vector3.new(0, 1, 0)
-            end
-
-            if UIS:IsKeyDown(Enum.KeyCode.LeftShift) then
-                move -= Vector3.new(0, 1, 0)
-            end
-
-            if move.Magnitude > 0 then
-                root.AssemblyLinearVelocity = move.Unit * 60
-            else
-                root.AssemblyLinearVelocity = Vector3.zero
-            end
+            local cam = workspace.CurrentCamera
+            local uis = game:GetService("UserInputService")
+            if uis:IsKeyDown(Enum.KeyCode.W) then move += cam.CFrame.LookVector end
+            if uis:IsKeyDown(Enum.KeyCode.S) then move -= cam.CFrame.LookVector end
+            if uis:IsKeyDown(Enum.KeyCode.A) then move -= cam.CFrame.RightVector end
+            if uis:IsKeyDown(Enum.KeyCode.D) then move += cam.CFrame.RightVector end
+            if uis:IsKeyDown(Enum.KeyCode.Space) then move += Vector3.new(0,1,0) end
+            if uis:IsKeyDown(Enum.KeyCode.LeftShift) then move -= Vector3.new(0,1,0) end
+            root.AssemblyLinearVelocity = move.Unit * 60
         end
     end
 
     -- Kill Aura
     if getgenv().KillAura then
-
-        local root = GetRoot()
-
+        local char = game.Players.LocalPlayer.Character
+        local root = char and char:FindFirstChild("HumanoidRootPart")
         if root then
-
             for _, plr in pairs(Players:GetPlayers()) do
-
-                if plr ~= LocalPlayer and plr.Character then
-
-                    local enemyRoot = plr.Character:FindFirstChild("HumanoidRootPart")
-
-                    if enemyRoot then
-
-                        local dist =
-                            (enemyRoot.Position - root.Position).Magnitude
-
-                        if dist < 15 then
-                            root.CFrame =
-                                enemyRoot.CFrame * CFrame.new(0, 0, 3)
-                        end
+                if plr ~= game.Players.LocalPlayer and plr.Character and plr.Character:FindFirstChild("HumanoidRootPart") then
+                    local dist = (plr.Character.HumanoidRootPart.Position - root.Position).Magnitude
+                    if dist < 15 then
+                        root.CFrame = plr.Character.HumanoidRootPart.CFrame * CFrame.new(0, 0, 3)
                     end
                 end
             end
